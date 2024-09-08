@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Audio Player with Playlist and Copyright Detection</title>
+    <style>
+        /* Base styles */
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            color: #fff;
+            background-color: #121212;
+            transition: background-color 0.3s;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: auto;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #00bfff;
+            text-shadow: 0 0 10px #00bfff;
+        }
+
+        input[type="url"] {
+            width: calc(100% - 130px);
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background: #333;
+            color: #fff;
+            margin-right: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            transition: box-shadow 0.3s;
+        }
+
+        input[type="url"]:focus {
+            box-shadow: 0 0 15px #00bfff;
+            outline: none;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background: #00bfff;
+            color: #fff;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.2s, box-shadow 0.3s;
+            box-shadow: 0 4px 8px rgba(0, 0, 255, 0.5);
+        }
+
+        button:hover {
+            background: #1e90ff;
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(0, 0, 255, 0.7);
+        }
+
+        button:active {
+            background: #1c86ee;
+            transform: scale(0.95);
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .control-button {
+            background: #333;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            margin: 5px;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.2s;
+        }
+
+        .control-button:hover {
+            background: #444;
+            transform: scale(1.05);
+        }
+
+        .control-button:active {
+            background: #555;
+            transform: scale(0.95);
+        }
+
+        .progress-bar {
+            height: 10px;
+            background: #333;
+            border-radius: 5px;
+            margin: 20px 0;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress {
+            height: 100%;
+            background: #00bfff;
+            width: 0;
+            border-radius: 5px;
+            transition: width 0.1s;
+        }
+
+        .time-display {
+            text-align: center;
+            margin-top: 10px;
+            color: #aaa;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            border-top: 1px solid #333;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            color: #aaa;
+        }
+
+        .footer p {
+            margin: 0;
+        }
+
+        /* Playlist */
+        .playlist-container {
+            margin-top: 30px;
+        }
+
+        .playlist-container input {
+            width: calc(100% - 130px);
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background: #333;
+            color: #fff;
+            margin-right: 10px;
+        }
+
+        .playlist {
+            margin-top: 10px;
+            background: #222;
+            padding: 10px;
+            border-radius: 5px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .playlist div {
+            padding: 5px;
+            border-bottom: 1px solid #444;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .playlist button {
+            background: #ff0000;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            padding: 5px;
+            cursor: pointer;
+            margin-top: 5px;
+        }
+
+        .playlist button:hover {
+            background: #cc0000;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            input[type="url"], .playlist-container input {
+                width: calc(100% - 110px);
+            }
+
+            button {
+                padding: 8px 15px;
+            }
+
+            .control-button {
+                padding: 8px 15px;
+                margin: 3px;
+            }
+
+            .progress-bar {
+                height: 8px;
+            }
+
+            .time-display {
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            input[type="url"], .playlist-container input {
+                width: calc(100% - 90px);
+            }
+
+            button {
+                padding: 6px 12px;
+            }
+
+            .control-button {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+
+            .progress-bar {
+                height: 6px;
+            }
+
+            .time-display {
+                font-size: 12px;
+            }
+        }
+
+        /* Blue Neon Theme */
+        .blue-theme {
+            background: linear-gradient(135deg, #000000, #0000ff);
+            color: #e0e0e0;
+        }
+
+        .blue-theme .container {
+            background: rgba(0, 0, 0, 0.9);
+        }
+
+        .blue-theme button {
+            background-color: #00bfff;
+            box-shadow: 0 4px 8px rgba(0, 0, 255, 0.5);
+        }
+
+        .blue-theme button:hover {
+            background-color: #1e90ff;
+            box-shadow: 0 6px 12px rgba(0, 0, 255, 0.7);
+        }
+
+        .blue-theme .progress-bar {
+            background: #444;
+        }
+
+        .blue-theme .progress {
+            background-color: #00bfff;
+        }
+
+        .blue-theme .volume-control input {
+            background-color: #00bfff;
+        }
+
+        .blue-theme .footer {
+            background: rgba(0, 0, 0, 0.9);
+            color: #aaa;
+        }
+
+        .blue-theme .footer p {
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>YouTube Audio Player with Playlist and Copyright Detection</h1>
+        <input type="url" id="video-url" placeholder="Paste your YouTube video URL here...">
+        <button onclick="playVideo()">Play Video</button>
+        <button onclick="toggleTheme()" class="theme-toggle">Toggle Theme</button>
+        <div id="player-container"></div>
+        <div class="controls">
+            <button class="control-button" onclick="togglePlayPause()">Play/Pause</button>
+            <button class="control-button" onclick="muteUnmute()">Mute/Unmute</button>
+            <div class="volume-control">
+                <label for="volume">Volume:</label>
+                <input type="range" id="volume" min="0" max="1" step="0.01" value="1" onchange="adjustVolume()">
+            </div>
+        </div>
+        <div class="progress-bar" onclick="seek(event)">
+            <div class="progress"></div>
+        </div>
+        <div class="time-display" id="time-display">00:00 / 00:00</div>
+        <div id="copyright-warning" class="copyright-warning"></div>
+        
+        <div class="playlist-container">
+            <input type="url" id="playlist-url" placeholder="Add YouTube video URL to playlist...">
+            <button onclick="addToPlaylist()">Add to Playlist</button>
+            <div id="playlist" class="playlist"></div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>&copy; 2024 My Video Player. All rights reserved.</p>
+    </div>
+
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script>
+        let player;
+        let playlist = [];
+        let currentVideoIndex = 0;
+        let isPlaying = false;
+        let isMuted = false;
+        let theme = 'default';
+
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('player-container', {
+                height: '315',
+                width: '560',
+                videoId: '',
+                events: {
+                    'onReady': onPlayerReady,
+                    'onStateChange': onPlayerStateChange,
+                    'onError': onPlayerError
+                }
+            });
+        }
+
+        function onPlayerReady(event) {
+            updatePlaylistDisplay();
+            if (playlist.length > 0) {
+                playVideo(); // Play the first video if available
+            }
+        }
+
+        function onPlayerStateChange(event) {
+            if (event.data === YT.PlayerState.ENDED) {
+                nextVideo();
+            }
+        }
+
+        function onPlayerError(event) {
+            console.error('YouTube Player Error:', event.data);
+            alert('An error occurred with the YouTube Player.');
+        }
+
+        function playVideo() {
+            if (player && playlist.length > 0) {
+                player.loadVideoById(playlist[currentVideoIndex]);
+                player.playVideo();
+                isPlaying = true;
+            } else {
+                alert('No video to play. Add a video to the playlist.');
+            }
+        }
+
+        function togglePlayPause() {
+            if (player) {
+                if (isPlaying) {
+                    player.pauseVideo();
+                } else {
+                    player.playVideo();
+                }
+                isPlaying = !isPlaying;
+            }
+        }
+
+        function muteUnmute() {
+            if (player) {
+                if (isMuted) {
+                    player.unMute();
+                } else {
+                    player.mute();
+                }
+                isMuted = !isMuted;
+            }
+        }
+
+        function adjustVolume() {
+            const volume = document.getElementById('volume').value;
+            if (player) {
+                player.setVolume(volume * 100);
+            }
+        }
+
+        function seek(event) {
+            const progressBar = document.querySelector('.progress-bar');
+            const progressWidth = progressBar.offsetWidth;
+            const clickX = event.offsetX;
+            const duration = player.getDuration();
+            const seekTo = (clickX / progressWidth) * duration;
+            player.seekTo(seekTo, true);
+        }
+
+        function updateProgress() {
+            if (player) {
+                const duration = player.getDuration();
+                const currentTime = player.getCurrentTime();
+                const progress = (currentTime / duration) * 100;
+                document.querySelector('.progress').style.width = `${progress}%`;
+                document.getElementById('time-display').textContent = formatTime(currentTime) + ' / ' + formatTime(duration);
+            }
+        }
+
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        }
+
+        function extractVideoId(url) {
+            const match = url.match(/v=([a-zA-Z0-9_-]{11})/);
+            return match ? match[1] : null;
+        }
+
+        function addToPlaylist() {
+            const url = document.getElementById('playlist-url').value;
+            const videoId = extractVideoId(url);
+
+            if (videoId && !playlist.includes(videoId)) {
+                playlist.push(videoId);
+                updatePlaylistDisplay();
+                if (playlist.length === 1) {
+                    playVideo();
+                }
+            } else {
+                alert('Please enter a valid YouTube video URL or the video is already in the playlist.');
+            }
+        }
+
+        function updatePlaylistDisplay() {
+            const playlistContainer = document.getElementById('playlist');
+            playlistContainer.innerHTML = '';
+
+            playlist.forEach((videoId, index) => {
+                const videoElement = document.createElement('div');
+                videoElement.innerHTML = `
+                    <span>Video ${index + 1}: <a href="https://www.youtube.com/watch?v=${videoId}" target="_blank">https://www.youtube.com/watch?v=${videoId}</a></span>
+                    <button onclick="removeFromPlaylist(${index})">Remove</button>
+                `;
+                videoElement.addEventListener('click', () => {
+                    currentVideoIndex = index;
+                    playVideo();
+                });
+                playlistContainer.appendChild(videoElement);
+            });
+        }
+
+        function removeFromPlaylist(index) {
+            playlist.splice(index, 1);
+            if (currentVideoIndex >= playlist.length) {
+                currentVideoIndex = playlist.length - 1;
+            }
+            if (playlist.length > 0) {
+                playVideo();
+            } else {
+                player.stopVideo();
+                isPlaying = false;
+            }
+            updatePlaylistDisplay();
+        }
+
+        function nextVideo() {
+            currentVideoIndex = (currentVideoIndex + 1) % playlist.length;
+            playVideo();
+        }
+
+        function toggleTheme() {
+            theme = theme === 'default' ? 'blue-theme' : 'default';
+            document.body.className = theme;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setInterval(updateProgress, 1000);
+        });
+    </script>
+</body>
+</html>
